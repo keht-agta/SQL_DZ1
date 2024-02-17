@@ -2,7 +2,10 @@
 --Название и продолжительность самого длительного трека.
 select name, duration
 from song s
-order by duration desc limit 1
+--where duration ='00:03:30'
+where duration = (select MAX(s.duration) from song s)
+order by duration desc
+
 
 --DZ2.2
 --Название треков, продолжительность которых не менее 3,5 минут.
@@ -51,11 +54,24 @@ group by a.name;
 
 --DZ3.4
 --Все исполнители, которые не выпустили альбомы в 2020 году.
+--И обращаю внимание, что ваша реализация 9 запроса отвечает на вопрос “кто выпустил хоть что-то, кроме того,
+-- что выпустил в 2020”, а не на вопрос: “кто не выпустил альбомы в 2020 году”. 
+--Чтобы решить поставленную задачу нужно сначала найти тех исполнителей, кто выпустил альбом в 2020 (вложенным запросом), 
+--а потом их исключить из общего списка исполнителей.
+select m.name
+from musician m 
+join musician_albums ma on ma.musician_id = m.id 
+join album a on a.id = ma.album_id 
+where a.date_release BETWEEN '2020-01-01' and '2020-12-31'
+
+
 select m.name
 from musician m
-join musician_albums ma on ma.musician_id  = m.id 
+where m.name not in (select m.name
+from musician m 
+join musician_albums ma on ma.musician_id = m.id 
 join album a on a.id = ma.album_id 
-where a.date_release not BETWEEN '2020-01-01' and '2020-12-31'
+where a.date_release BETWEEN '2020-01-01' and '2020-12-31')
 
 --DZ3/5
 --Названия сборников, в которых присутствует конкретный исполнитель (выберите его сами).
@@ -67,5 +83,31 @@ join album a on a.id = s.album
 join musician_albums ma on ma.album_id = a.id 
 join musician m on m.id = ma.musician_id 
 where m.name = 'Клава Кока'
+
+--DZ4.1
+--Названия альбомов, в которых присутствуют исполнители более чем одного жанра.
+--select m."id"
+--from musician m  
+--join musician_genres mg on mg.musician_id  = m.id  
+--group by m.id 
+--having count(mg.genre_id) >1
+
+select distinct a.name
+from album a 
+join musician_albums ma on ma.album_id = a.id
+join musician m on m.id = ma.musician_id
+join musician_genres mg on mg.musician_id  = m.id
+where m.id = (select m."id" from musician m  join musician_genres mg on mg.musician_id  = m.id  group by m.id having count(mg.genre_id) >1)
+order by a."name"  desc 
+
+
+--DZ4.2
+--Наименования треков, которые не входят в сборники.
+
+--DZ4.3
+--Исполнитель или исполнители, написавшие самый короткий по продолжительности трек, — теоретически таких треков может быть несколько.
+
+--DZ4.4
+--Названия альбомов, содержащих наименьшее количество треков.
 
 
